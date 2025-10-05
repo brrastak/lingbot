@@ -25,7 +25,6 @@ class TranslationSource(Enum):
 @dataclass
 class TranslationResult:
     translations: list[str]
-    collocations: list[tuple[str, str]]
     examples: list[tuple[str, str]]
 
 
@@ -48,22 +47,19 @@ class Translation:
             translations = [span.get_text(" ", strip=True) 
                             for span in soup.select("span.lex_ful_tran.w.l2")]
 
-            # Extract collocations
-            collocations = []
-            for coll in soup.select("span.lex_ful_coll2s.w.l1"):
-                src = coll.get_text(" ", strip=True)
-                dst = coll.find_next("span", class_="lex_ful_coll2t").get_text(" ", strip=True)
-                collocations.append((src, dst))
-
-            # Extract fulltext examples
             examples = []
-            for row in soup.select("table.fulltext tr.lex_ftx_sens"):
-                src = row.select_one("span.lex_ftx_samp2s").get_text(" ", strip=True)
-                dst = row.select_one("span.lex_ftx_samp2t").get_text(" ", strip=True)
-                examples.append((src, dst))
+            # All wrapper spans that hold a source/translation pair
+            for wrapper in soup.select("span[class$='2']"):  # matches lex_ful_coll2, lex_ful_samp2, lex_ful_idis2
+                src_span = wrapper.find(lambda tag: tag.name == "span" and tag.get("class") and any(c.endswith("2s") for c in tag["class"]))
+                dst_span = wrapper.find(lambda tag: tag.name == "span" and tag.get("class") and any(c.endswith("2t") for c in tag["class"]))
+                
+                if src_span:
+                    src = src_span.get_text(" ", strip=True)
+                    dst = dst_span.get_text(" ", strip=True) if dst_span else ""
+                    examples.append((src, dst))
 
         except Exception as e:
             print(f"An error occurred: {e}")
             return None
 
-        return TranslationResult(translations, collocations, examples)
+        return TranslationResult(translations, examples)
