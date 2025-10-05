@@ -6,16 +6,21 @@ from urllib.parse import quote
 
 
 class TranslationSource(Enum):
-    RU_SK = ("RU-SK", "https://slovniky.lingea.sk/rusko-slovensky/")
-    EN_SK = ("EN-SK", "https://slovniky.lingea.sk/anglicko-slovensky/")
+    RU_SK = ("RU-SK", "🇷🇺", "https://slovniky.lingea.sk/rusko-slovensky/")
+    EN_SK = ("EN-SK", "🇬🇧", "https://slovniky.lingea.sk/anglicko-slovensky/")
 
-    def __init__(self, label: str, url: str):
+    def __init__(self, label: str, flag: str, url: str):
         self._label = label
+        self._flag = flag
         self._url = url
 
     @property
     def label(self) -> str:
         return self._label
+
+    @property
+    def flag(self) -> str:
+        return self._flag
 
     @property
     def url(self) -> str:
