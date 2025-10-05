@@ -52,7 +52,7 @@ async def help_command(message: Message, state: FSMContext):
             source = src
 
     help_text = (
-        "🤖 *LingBot Help*\n\n"
+        "🤖 *SlovakLingBot Help*\n\n"
         "Here’s what I can do:\n"
         "• `/start` – start the bot\n"
         "• `/help` – show this help message\n"
