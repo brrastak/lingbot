@@ -3,11 +3,13 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, ErrorEvent
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from dotenv import load_dotenv
 import asyncio
 import logging
 import os
 
-from translate import Translator, TranslationSource
+import translation
+from translation import TranslationSource
 
 
 EXAMPLES_CALLBACK = "show_examples"
@@ -20,6 +22,7 @@ logging.basicConfig(
 )
 
 # Initialize bot and dispatcher
+load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 bot = Bot(token=f"{BOT_TOKEN}")
 dp = Dispatcher()
@@ -81,9 +84,11 @@ async def global_error_handler(event: ErrorEvent):
 # Translate given word
 @dp.message(F.text & ~F.text.startswith("/"))
 async def translate(message: Message, state: FSMContext):
-    translator = await get_translator(state)
     word = message.text
-    translated = await translator.get(word)
+    if word is None:
+        return
+    source = await get_source(state)
+    translated = await translation.get(word, source)
 
     logging.info("User %s requested translation for '%s'", message.from_user.id, word)
 
@@ -97,7 +102,7 @@ async def translate(message: Message, state: FSMContext):
     if translated is None:
         msg = "Sorry, something went wrong 😢"
     elif not translated.translations:
-        msg = "No translation found, try something else 🤔"
+        msg = f"No translation found in {source.label} {source.flag}, try something else 🤔 "
     else:
         # The translated word should go first to be used later for collocations and examples
         msg = f"*{word}* - {', '.join(translated.translations)}"
@@ -118,15 +123,14 @@ async def handle_keys(callback: CallbackQuery, state: FSMContext):
     if not original_message:
         await callback.answer()
         return
-    
-    translator = await get_translator(state)
 
     word = original_message.split(" ")[0]
     logging.info("Requested examples for '%s'", word)
 
     lines = ["Sorry, something went wrong 😢"]
 
-    translated = await translator.get(word)
+    source = await get_source(state)
+    translated = await translation.get(word, source)
     if translated is None:
         pass
     else:
@@ -178,8 +182,8 @@ async def set_source(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
 
-# Return Translation class according to the current state for the current user
-async def get_translator(state: FSMContext) -> Translator:
+# Return TranslationSource class according to the current state for the current user
+async def get_source(state: FSMContext) -> TranslationSource:
     data = await state.get_data()
     source_label = data.get("source")
 
@@ -188,7 +192,7 @@ async def get_translator(state: FSMContext) -> Translator:
         if source_label == src.label:
             source = src
     
-    return Translator(source)
+    return source
 
 
 
