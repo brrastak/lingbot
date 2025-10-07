@@ -33,15 +33,19 @@ class Dictionary(Enum):
     @property
     def url(self) -> str:
         return self._url
+    
+    @classmethod
+    def default(cls) -> "Dictionary":
+        return cls.EN_SK
 
 
 @dataclass
-class TranslationResult:
+class Translation:
     translations: list[str]
     examples: list[tuple[str, str]]
 
 
-async def get(word: str, dict: Dictionary) -> TranslationResult | None:
+async def get(word: str, dict: Dictionary) -> Translation | None:
     url = f"{dict.url}{quote(word)}"
     
     try:
@@ -51,11 +55,6 @@ async def get(word: str, dict: Dictionary) -> TranslationResult | None:
             # Check request status
             r.raise_for_status()
             soup = BeautifulSoup(r.text, "lxml")
-        # r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
-        
-        # r.raise_for_status()
-        # # Parse the page
-        # soup = BeautifulSoup(r.text, "html.parser")
 
         # Extract main translations
         translations = [
@@ -83,7 +82,7 @@ async def get(word: str, dict: Dictionary) -> TranslationResult | None:
                 examples.append((src, dst))
 
     except Exception as e:
-        logging.exception(f"Failed to fetch translation for \"{word}\": {e}")
+        logging.exception(f"Failed to fetch translation for \"%s\": %s", word, e)
         return None
 
-    return TranslationResult(translations, examples)
+    return Translation(translations, examples)

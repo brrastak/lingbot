@@ -29,11 +29,14 @@ dp = Dispatcher()
 
 
 @dp.message(Command("start"))
-async def start(message: Message):
-    await message.answer("Hello! Send me a word to translate 😊")
+async def start(message: Message, state: FSMContext):
+    current_dict = await get_dictionary(state)
+    await message.answer("Hello! Send me a word to translate 😊\n"
+                         f"*Current dictionary:* {current_dict.flag} {current_dict.label}"
+                        , parse_mode="Markdown")
 
 @dp.message(Command("dict"))
-async def select_source(message: Message):
+async def select_dictionary(message: Message):
     keyboard = InlineKeyboardBuilder()
     for dict in Dictionary:
         keyboard.button(
@@ -97,7 +100,7 @@ async def translate(message: Message, state: FSMContext):
     if translated is None:
         msg = "Sorry, something went wrong 😢"
     elif not translated.translations:
-        msg = f"No translation found in {dictionary.label} {dictionary.flag}, try something else 🤔 "
+        msg = f"No translation found in {dictionary.flag} {dictionary.label}, try something else 🤔 "
     else:
         # The translated word should go first to be used later for collocations and examples
         msg = f"*{word}* - {', '.join(translated.translations)}"
@@ -152,27 +155,22 @@ async def handle_keys(callback: CallbackQuery, state: FSMContext):
     await callback.answer()  # Always answer callback queries
 
 
-# Choose dictionary (RU-SK / EN-SK)
+# Choose dictionary
 @dp.callback_query(F.data.startswith(f"{DICTIONARY_CALLBACK}"))
 async def set_dictionary(callback: CallbackQuery, state: FSMContext):
     if callback.data:
         dictionary_label = callback.data.removeprefix(f"{DICTIONARY_CALLBACK}")
     else:
-        await callback.answer()
         return
     
-    await state.update_data(dict=dictionary_label)
-
-    dictionary_flag = ""
-    for dictionary in Dictionary:
-        if dictionary_label == dictionary.label:
-            dictionary_flag = dictionary.flag
-    if not dictionary_flag:
-        await callback.answer()
+    dictionary = str_to_dict(dictionary_label)
+    if dictionary is None:
         return
 
+    await state.update_data(dict=dictionary.label)
+
     if callback.message:
-        await callback.message.answer(f"✅ Dictionary set to {dictionary_label} {dictionary_flag}")
+        await callback.message.answer(f"✅ Dictionary set to {dictionary.flag} {dictionary.label}")
     await callback.answer()
 
 
@@ -180,13 +178,22 @@ async def set_dictionary(callback: CallbackQuery, state: FSMContext):
 async def get_dictionary(state: FSMContext) -> Dictionary:
     data = await state.get_data()
     dictionary_label = data.get("dict")
-
-    dictionary = Dictionary.RU_SK
-    for dict in Dictionary:
-        if dictionary_label == dict.label:
-            dictionary = dict
+    if not isinstance(dictionary_label, str):
+        # Show must go on?
+        return Dictionary.default()
     
-    return dictionary
+    dictionary = str_to_dict(dictionary_label)
+    if not (dictionary is None):
+        return dictionary
+    
+    return Dictionary.default()
+
+# Return Dictionary value with corresponding label
+def str_to_dict(label: str) -> Dictionary | None:
+    for dict in Dictionary:
+        if dict.label == label:
+            return dict
+    return None
 
 
 
