@@ -8,8 +8,8 @@ import asyncio
 import logging
 import os
 
-import translation
-from translation import Dictionary
+from lingbot import translation
+from lingbot.translation import Dictionary
 
 
 EXAMPLES_CALLBACK = "show_examples"
@@ -201,5 +201,3 @@ def str_to_dict(label: str) -> Dictionary | None:
 async def main():
     await dp.start_polling(bot)
 
-if __name__ == '__main__':
-    asyncio.run(main())
