@@ -12,7 +12,7 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s"
 )
 
-class TranslationSource(Enum):
+class Dictionary(Enum):
     RU_SK = ("RU-SK", "🇷🇺", "https://slovniky.lingea.sk/rusko-slovensky/")
     EN_SK = ("EN-SK", "🇬🇧", "https://slovniky.lingea.sk/anglicko-slovensky/")
     UA_SK = ("UA-SK", "🇺🇦", "https://slovniky.lingea.sk/ukrajinsko-slovensky/")
@@ -41,8 +41,8 @@ class TranslationResult:
     examples: list[tuple[str, str]]
 
 
-async def get(word: str, source: TranslationSource) -> TranslationResult | None:
-    url = f"{source.url}{quote(word)}"
+async def get(word: str, dict: Dictionary) -> TranslationResult | None:
+    url = f"{dict.url}{quote(word)}"
     
     try:
         # Request translation

@@ -9,11 +9,11 @@ import logging
 import os
 
 import translation
-from translation import TranslationSource
+from translation import Dictionary
 
 
 EXAMPLES_CALLBACK = "show_examples"
-SOURCE_CALLBACK = "set_source_"
+DICTIONARY_CALLBACK = "set_dictionary_"
 
 # Configure logging
 logging.basicConfig(
@@ -32,39 +32,32 @@ dp = Dispatcher()
 async def start(message: Message):
     await message.answer("Hello! Send me a word to translate 😊")
 
-@dp.message(Command("source"))
+@dp.message(Command("dict"))
 async def select_source(message: Message):
     keyboard = InlineKeyboardBuilder()
-    for src in TranslationSource:
+    for dict in Dictionary:
         keyboard.button(
-            text=f"{src.flag} {src.label}",
-            callback_data=f"{SOURCE_CALLBACK}{src.label}"
+            text=f"{dict.flag} {dict.label}",
+            callback_data=f"{DICTIONARY_CALLBACK}{dict.label}"
         )
-    await message.answer("Select translation source:", reply_markup=keyboard.as_markup())
+    await message.answer("Select dictionary:", reply_markup=keyboard.as_markup())
 
 
 @dp.message(Command("help"))
 async def help_command(message: Message, state: FSMContext):
-    # Get user data from FSM
-    data = await state.get_data()
-    source_label = data.get("source")
+    current_dict = await get_dictionary(state)
 
-    source = TranslationSource.RU_SK
-    for src in TranslationSource:
-        if source_label == src.label:
-            source = src
-
-    sources = ", ".join(f"{src.flag} {src.label}" for src in TranslationSource)
+    dictionaries = ", ".join(f"{src.flag} {src.label}" for src in Dictionary)
 
     help_text = (
         "🤖 *SlovakLingBot Help*\n\n"
         "Here’s what I can do:\n"
         "• `/start` – start the bot\n"
         "• `/help` – show this help message\n"
-        f"• `/source` – choose the translation source ({sources})\n\n"
+        f"• `/dict` – choose the dictionary ({dictionaries})\n\n"
         "Just send me *any word*, and I’ll translate it for you!\n"
         "If examples are available, tap the button to see them.\n\n"
-        f"🌐 *Current source:* {source.flag} {source.label}"
+        f"🌐 *Current dictionary:* {current_dict.flag} {current_dict.label}"
     )
 
     await message.answer(help_text, parse_mode="Markdown")
@@ -89,8 +82,8 @@ async def translate(message: Message, state: FSMContext):
     word = message.text
     if word is None:
         return
-    source = await get_source(state)
-    translated = await translation.get(word, source)
+    dictionary = await get_dictionary(state)
+    translated = await translation.get(word, dictionary)
 
     logging.info("User %s requested translation for '%s'", message.from_user.id, word)
 
@@ -104,7 +97,7 @@ async def translate(message: Message, state: FSMContext):
     if translated is None:
         msg = "Sorry, something went wrong 😢"
     elif not translated.translations:
-        msg = f"No translation found in {source.label} {source.flag}, try something else 🤔 "
+        msg = f"No translation found in {dictionary.label} {dictionary.flag}, try something else 🤔 "
     else:
         # The translated word should go first to be used later for collocations and examples
         msg = f"*{word}* - {', '.join(translated.translations)}"
@@ -113,7 +106,7 @@ async def translate(message: Message, state: FSMContext):
 
 
 # Request additional examples
-@dp.callback_query(~F.data.startswith(f"{SOURCE_CALLBACK}"))
+@dp.callback_query(~F.data.startswith(f"{DICTIONARY_CALLBACK}"))
 async def handle_keys(callback: CallbackQuery, state: FSMContext):
 
     if isinstance(callback.message, Message):
@@ -131,8 +124,8 @@ async def handle_keys(callback: CallbackQuery, state: FSMContext):
 
     lines = ["Sorry, something went wrong 😢"]
 
-    source = await get_source(state)
-    translated = await translation.get(word, source)
+    dictionary = await get_dictionary(state)
+    translated = await translation.get(word, dictionary)
     if translated is None:
         pass
     else:
@@ -159,42 +152,41 @@ async def handle_keys(callback: CallbackQuery, state: FSMContext):
     await callback.answer()  # Always answer callback queries
 
 
-# Choose translation source (RU-SK / EN-SK)
-@dp.callback_query(F.data.startswith(f"{SOURCE_CALLBACK}"))
-async def set_source(callback: CallbackQuery, state: FSMContext):
+# Choose dictionary (RU-SK / EN-SK)
+@dp.callback_query(F.data.startswith(f"{DICTIONARY_CALLBACK}"))
+async def set_dictionary(callback: CallbackQuery, state: FSMContext):
     if callback.data:
-        source_label = callback.data.removeprefix(f"{SOURCE_CALLBACK}")
+        dictionary_label = callback.data.removeprefix(f"{DICTIONARY_CALLBACK}")
     else:
         await callback.answer()
         return
     
-    await state.update_data(source=source_label)
-    # await state.update_data(source=source_code)
+    await state.update_data(dict=dictionary_label)
 
-    source_flag = ""
-    for source in TranslationSource:
-        if source_label == source.label:
-            source_flag = source.flag
-    if not source_flag:
+    dictionary_flag = ""
+    for dictionary in Dictionary:
+        if dictionary_label == dictionary.label:
+            dictionary_flag = dictionary.flag
+    if not dictionary_flag:
         await callback.answer()
         return
 
     if callback.message:
-        await callback.message.answer(f"✅ Source set to {source_label} {source_flag}")
+        await callback.message.answer(f"✅ Dictionary set to {dictionary_label} {dictionary_flag}")
     await callback.answer()
 
 
-# Return TranslationSource class according to the current state for the current user
-async def get_source(state: FSMContext) -> TranslationSource:
+# Return Dictionary class according to the current state for the current user
+async def get_dictionary(state: FSMContext) -> Dictionary:
     data = await state.get_data()
-    source_label = data.get("source")
+    dictionary_label = data.get("dict")
 
-    source = TranslationSource.RU_SK
-    for src in TranslationSource:
-        if source_label == src.label:
-            source = src
+    dictionary = Dictionary.RU_SK
+    for dict in Dictionary:
+        if dictionary_label == dict.label:
+            dictionary = dict
     
-    return source
+    return dictionary
 
 
 
