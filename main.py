@@ -54,12 +54,14 @@ async def help_command(message: Message, state: FSMContext):
         if source_label == src.label:
             source = src
 
+    sources = ", ".join(f"{src.flag} {src.label}" for src in TranslationSource)
+
     help_text = (
         "🤖 *SlovakLingBot Help*\n\n"
         "Here’s what I can do:\n"
         "• `/start` – start the bot\n"
         "• `/help` – show this help message\n"
-        "• `/source` – choose the translation source (🇷🇺 RU–SK or 🇬🇧 EN–SK)\n\n"
+        f"• `/source` – choose the translation source ({sources})\n\n"
         "Just send me *any word*, and I’ll translate it for you!\n"
         "If examples are available, tap the button to see them.\n\n"
         f"🌐 *Current source:* {source.flag} {source.label}"

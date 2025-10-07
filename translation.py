@@ -15,6 +15,7 @@ logging.basicConfig(
 class TranslationSource(Enum):
     RU_SK = ("RU-SK", "🇷🇺", "https://slovniky.lingea.sk/rusko-slovensky/")
     EN_SK = ("EN-SK", "🇬🇧", "https://slovniky.lingea.sk/anglicko-slovensky/")
+    UA_SK = ("UA-SK", "🇺🇦", "https://slovniky.lingea.sk/ukrajinsko-slovensky/")
 
     def __init__(self, label: str, flag: str, url: str):
         self._label = label
