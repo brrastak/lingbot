@@ -8,8 +8,9 @@ import asyncio
 import logging
 import os
 
-from lingbot import translation
-from lingbot.translation import Dictionary
+# from lingbot import translation
+from translation.dictionary import Dictionary, str_to_dict
+from translation import translation
 
 
 EXAMPLES_CALLBACK = "show_examples"
@@ -30,25 +31,25 @@ dp = Dispatcher()
 
 @dp.message(Command("start"))
 async def start(message: Message, state: FSMContext):
-    current_dict = await get_dictionary(state)
+    current_dictionary = await get_dictionary(state)
     await message.answer("Hello! Send me a word to translate 😊\n"
-                         f"*Current dictionary:* {current_dict.flag} {current_dict.label}"
+                         f"*Current dictionary:* {current_dictionary.flag} {current_dictionary.label}"
                         , parse_mode="Markdown")
 
 @dp.message(Command("dict"))
 async def select_dictionary(message: Message):
     keyboard = InlineKeyboardBuilder()
-    for dict in Dictionary:
+    for dictionary in Dictionary:
         keyboard.button(
-            text=f"{dict.flag} {dict.label}",
-            callback_data=f"{DICTIONARY_CALLBACK}{dict.label}"
+            text=f"{dictionary.flag} {dictionary.label}",
+            callback_data=f"{DICTIONARY_CALLBACK}{dictionary.label}"
         )
     await message.answer("Select dictionary:", reply_markup=keyboard.as_markup())
 
 
 @dp.message(Command("help"))
 async def help_command(message: Message, state: FSMContext):
-    current_dict = await get_dictionary(state)
+    current_dictionary = await get_dictionary(state)
 
     dictionaries = ", ".join(f"{src.flag} {src.label}" for src in Dictionary)
 
@@ -60,7 +61,7 @@ async def help_command(message: Message, state: FSMContext):
         f"• `/dict` – choose the dictionary ({dictionaries})\n\n"
         "Just send me *any word*, and I’ll translate it for you!\n"
         "If examples are available, tap the button to see them.\n\n"
-        f"🌐 *Current dictionary:* {current_dict.flag} {current_dict.label}"
+        f"🌐 *Current dictionary:* {current_dictionary.flag} {current_dictionary.label}"
     )
 
     await message.answer(help_text, parse_mode="Markdown")
@@ -188,16 +189,9 @@ async def get_dictionary(state: FSMContext) -> Dictionary:
     
     return Dictionary.default()
 
-# Return Dictionary value with corresponding label
-def str_to_dict(label: str) -> Dictionary | None:
-    for dict in Dictionary:
-        if dict.label == label:
-            return dict
-    return None
-
-
 
 
 async def main():
     await dp.start_polling(bot)
 
+asyncio.run(main())

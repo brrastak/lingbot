@@ -1,5 +1,4 @@
-from lingbot.main import str_to_dict
-from lingbot.translation import Dictionary
+from lingbot.translation.dictionary import Dictionary, str_to_dict
 
 
 def test_correct_label():
