@@ -6,5 +6,3 @@ def test_correct_label():
 
 def test_incorrect_label():
     assert str_to_dict("UA_SK") == None
-
-print(str_to_dict("UA-SK"))
