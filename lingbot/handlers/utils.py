@@ -1,6 +1,7 @@
 from aiogram.fsm.context import FSMContext
+from aiogram.utils.formatting import Text
 
-from translation.dictionary import Dictionary, str_to_dict
+from lingbot.translation.dictionary import Dictionary, str_to_dict
 
 
 # Return Dictionary class according to the current state for the current user
@@ -16,3 +17,21 @@ async def get_dictionary(state: FSMContext) -> Dictionary:
         return dictionary
     
     return Dictionary.default()
+
+# Turn Text objects into strings containing markdown formatting and meeting message length requirement
+def into_markdown_messages(texts: list[Text]) -> list[str]:
+    MAX_LEN = 4096
+
+    messages = []
+    current = Text()
+    for line in texts:
+        next = Text(current, line, "\n")
+        if len(next.as_markdown()) > MAX_LEN:
+            # current message is full, save it
+            messages.append(current.as_markdown())
+            current = Text(line, "\n")
+        else:
+            current = next
+    if current:
+        messages.append(current.as_markdown())
+    return messages
