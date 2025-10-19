@@ -5,6 +5,7 @@ from aiogram.types import BotCommand, BotCommandScopeDefault, Message, ErrorEven
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 from aiohttp import web
 from dotenv import load_dotenv
+import asyncio
 import logging
 import os
 
@@ -58,18 +59,21 @@ async def main():
         await bot.session.close()
         logging.info("Webhook removed and session closed.")
 
-    def run_webhook():
+    async def run_webhook():
         logging.info("Starting bot in WEBHOOK mode...")
 
         app = web.Application()
         SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path=WEBHOOK_PATH)
         setup_application(app, dp, bot=bot)
-
         app.on_startup.append(on_startup_webhook)
         app.on_shutdown.append(on_shutdown_webhook)
 
-        port = int(os.getenv("PORT", 8080))
-        web.run_app(app, host="0.0.0.0", port=port)
+        runner = web.AppRunner(app)
+        await runner.setup()
+        site = web.TCPSite(runner, "0.0.0.0", int(os.getenv("PORT", 8080)))
+        await site.start()
+
+        await asyncio.Event().wait()  # keep running
 
     async def run_polling():
         logging.info("Starting bot in POLLING mode...")
@@ -88,4 +92,4 @@ async def main():
     if USE_POLLING:
         await run_polling()
     else:
-        run_webhook()
+        await run_webhook()
