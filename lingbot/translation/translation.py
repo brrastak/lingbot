@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from dataclasses import dataclass
 from urllib.parse import quote
 
-from .dictionary import Dictionary
+from lingbot.translation.dictionary import Dictionary
 
 
 @dataclass

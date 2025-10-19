@@ -4,8 +4,8 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from aiogram.utils.formatting import Text, Bold
 
-from translation.dictionary import Dictionary
-from .utils import get_dictionary
+from lingbot.translation.dictionary import Dictionary
+from lingbot.handlers.utils import get_dictionary
 
 
 router = Router()

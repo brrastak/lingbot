@@ -5,7 +5,7 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.utils.formatting import Text
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from translation.dictionary import Dictionary, str_to_dict
+from lingbot.translation.dictionary import Dictionary, str_to_dict
 
 
 router = Router()
