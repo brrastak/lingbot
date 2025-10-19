@@ -1,7 +1,7 @@
 from aiogram import Bot, Dispatcher, F
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
-from aiogram.types import Message, ErrorEvent
+from aiogram.types import BotCommand, BotCommandScopeDefault, Message, ErrorEvent
 from dotenv import load_dotenv
 import logging
 import os
@@ -39,6 +39,13 @@ async def main():
                     await event.update.callback_query.message.answer("Sorry, something went wrong 😢")
         except Exception as notify_err:
             logging.warning("Couldn't send error message to user: %s", notify_err)
+
+    commands = [
+        BotCommand(command="start", description="Start bot"),
+        BotCommand(command="help", description="Read help"),
+        BotCommand(command="dict", description="Choose dictionary"),
+    ]
+    await bot.set_my_commands(commands, BotCommandScopeDefault())
 
     # Don't answer old messages
     await bot.delete_webhook(drop_pending_updates=True)
