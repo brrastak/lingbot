@@ -15,10 +15,6 @@ fi
 # Activate the environment
 source "$VENV_DIR/bin/activate"
 
-# Upgrade pip (optional but recommended)
-echo "Upgrading pip..."
-pip install --upgrade pip
-
 # Install requirements
 echo "Installing dependencies from requirements.txt..."
 pip install -r requirements.txt
