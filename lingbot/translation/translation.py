@@ -32,7 +32,7 @@ async def get(word: str, dict: Dictionary) -> Translation | None:
     return translation
 
 def parse(source: str) -> Translation | None:
-    soup = BeautifulSoup(source, "lxml")
+    soup = BeautifulSoup(source, "html.parser")
 
     # Extract main translations
     translations = [
